@@ -1,0 +1,13 @@
+name: xyz
+owner: fabio
+categories:
+  - Visualization
+description: xyz
+long_description: |
+  A novel method for assessing and measuring homophily in networks.
+remote_repository_url: https://github.com/fabio-cumbo/xyz
+homepage_url: https://github.com/fabio-cumbo/xyz
+type: unrestricted
+auto_tool_repositories:
+  name_template: "{{ tool_id }}"
+  descriptor_template: "Wrapper for xyz: {{ tool_name }}"

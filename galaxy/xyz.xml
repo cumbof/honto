@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<tool name="xyz" id="xyz" version="0.1.0">
+    <description>A novel method for assessing and measuring homophily in networks</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+
+    <!-- Tool developers -->
+    <expand macro="creator" />
+
+    <!-- Define dependencies -->
+    <expand macro="requirements" />
+
+    <command detect_errors="exit_code">
+<![CDATA[
+    ...
+]]>
+    </command>
+
+    <inputs>
+        
+    </inputs>
+
+    <outputs>
+        
+    </outputs>
+
+    <help><![CDATA[
+Define the tool help here with info about input and output
+
+-----
+
+.. class:: infomark
+
+**Notes**
+
+Please visit this GitHub repository GithHub_repository_ for additional information about xyz.
+
+.. _GithHub_repository: https://github.com/fabio-cumbo/xyz
+    ]]></help>
+
+    <expand macro="citations" />
+</tool>
