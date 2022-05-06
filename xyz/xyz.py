@@ -68,11 +68,11 @@ def plot_heatmap(input_edges, z_score_edges):
                     left=False, right=False, labelbottom=False, bottom=False, top=False)
     plt.savefig("{}.pdf".format(os.path.splitext(input_edges)[0]))
 
-def transform_z_score(zscores):
+def transform_z_score(zscores, scale_value):
+    scale_value = scale_value if scale_value >=0 else scale_value*-1
     for color1 in zscores:
         for color2 in zscores[color1]:
-            zscores[color1][color2] = math.log(zscores[color1][color2] + 20)
-    
+            zscores[color1][color2] = math.log(zscores[color1][color2] + scale_value+1)
     return zscores
 
 def compute_print_z_score_singletons(input_edges, n_nodes, memo_falling_frac, 
@@ -80,14 +80,15 @@ def compute_print_z_score_singletons(input_edges, n_nodes, memo_falling_frac,
                                      pairs_p_3, col_list, excluded_colors, nproc=1, verbose=False):
     pairs_p_3_res = set()
     with open("{}_zscores_singletons.txt".format(os.path.splitext(input_edges)[0]), "w+") as f:
-        f.write("# id\tcolor\tn\tm\tz_score\n")
+        f.write("# {}\n".format(os.path.basename(input_edges)))
+        f.write("# color\tn\tm\tz_score\n")
         for color in col_list:
             if color not in excluded_colors:
                 induced_subgraph = induced_color_subgraph(supergraph, "color", color)
                 n_sub, m_sub, z_score_singletons, pairs_p_3 = subgraph_profile(induced_subgraph, n_nodes, memo_falling_frac, 
                                                                                supergraph_degrees, supergraph_degree_histo, supergraph, pairs_p_3, 
                                                                                nproc=nproc, verbose=verbose)
-                f.write("{}\t{}\t{}\t{}\t{:.4f}\n".format(os.path.basename(input_edges), color, n_sub, m_sub, z_score_singletons))
+                f.write("{}\t{}\t{}\t{:.4f}\n".format(color, n_sub, m_sub, z_score_singletons))
     
     return pairs_p_3_res
 
@@ -105,10 +106,11 @@ def subgraph_profile(graph, n_nodes, memo_falling_frac,
 
 def print_z_score_edges(input_edges, col_list, z_score_edges):
     with open("{}_zscores_edges.txt".format(os.path.splitext(input_edges)[0]), "w+") as f:
-        f.write("# id\tcolor1\tcolor2\tz_score\n")
+        f.write("# {}\n".format(os.path.basename(input_edges)))
+        f.write("# color1\tcolor2\tz_score\n")
         for color1 in col_list:
             for color2 in col_list:
-                f.write("{}\t{}\t{}\t{:.4f}\n".format(os.path.basename(input_edges), color1, color2, z_score_edges[color1][color2]))
+                f.write("{}\t{}\t{:.4f}\n".format(color1, color2, z_score_edges[color1][color2]))
 
 def z_score_number_edges(memo_falling_frac, n_edges, n_nodes, col_list, 
                          node_distribution, memo_falling_power, edge_distribution, pi_3):
@@ -120,6 +122,7 @@ def z_score_number_edges(memo_falling_frac, n_edges, n_nodes, col_list,
     variance_edges = variance_number_edges(n_edges, n_nodes, memo_falling_power, node_distribution, col_list, pi_3)
 
     z_scores = dict({color: dict() for color in col_list})
+    min_value = None
     for color1 in col_list:
         for color2 in col_list:
             sigma = math.sqrt(variance_edges[color1][color2])
@@ -127,8 +130,14 @@ def z_score_number_edges(memo_falling_frac, n_edges, n_nodes, col_list,
                 z_scores[color1][color2] = 0
             else:
                 z_scores[color1][color2] = (edge_distribution[color1][color2] - expected_edges[color1][color2]) / sigma
-    
-    return z_scores
+            
+            if min_value is None:
+                min_value = z_scores[color1][color2]
+            else:
+                if z_scores[color1][color2] < min_value:
+                    min_value = z_scores[color1][color2]
+        
+    return z_scores, min_value
 
 def variance_number_edges(n_edges, n_nodes, memo_falling_power, node_distribution, col_list, pi_3):
     """
@@ -437,7 +446,7 @@ def main():
     # Load command line parameters
     args = read_params()
     if args.verbose:
-        print('v{} ({})'.format(__version__, __date__))
+        print('xyz v{} ({})'.format(__version__, __date__))
         print("\t--input_edges {}".format(args.input_edges))
         if args.input_nodes:
             print("\t--input_nodes {}".format(args.input_nodes))
@@ -467,8 +476,8 @@ def main():
                                                                                                                        memo_falling_power,
                                                                                                                        verbose=args.verbose)
 
-    z_score_edges = z_score_number_edges(memo_falling_frac, n_edges, n_nodes, col_list, 
-                                         node_distribution, memo_falling_power, edge_distribution, pi_3)
+    z_score_edges, min_value = z_score_number_edges(memo_falling_frac, n_edges, n_nodes, col_list, 
+                                                    node_distribution, memo_falling_power, edge_distribution, pi_3)
 
     edge_zscore_t1 = time.time()
     if args.verbose:
@@ -477,7 +486,7 @@ def main():
     print_z_score_edges(args.input_edges, col_list, z_score_edges)
 
     # Z-score log transformation for plotting heatmap
-    z_score_edges = transform_z_score(z_score_edges)
+    z_score_edges = transform_z_score(z_score_edges, min_value)
     # Plot heatmap
     plot_heatmap(args.input_edges, z_score_edges)
     singleton_zscore_t0 = time.time()
