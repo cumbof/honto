@@ -69,7 +69,8 @@ def plot_heatmap(input_edges, z_score_edges):
     plt.savefig("{}.pdf".format(os.path.splitext(input_edges)[0]))
 
 def transform_z_score(zscores, scale_value):
-    scale_value = scale_value if scale_value >=0 else scale_value*-1
+    #scale_value = scale_value if scale_value >=0 else scale_value*-1
+    scale_value = 20
     for color1 in zscores:
         for color2 in zscores[color1]:
             zscores[color1][color2] = math.log(zscores[color1][color2] + scale_value+1)
@@ -77,8 +78,8 @@ def transform_z_score(zscores, scale_value):
 
 def compute_print_z_score_singletons(input_edges, n_nodes, memo_falling_frac, 
                                      supergraph_degrees, supergraph_degree_histo, supergraph, 
-                                     pairs_p_3, col_list, excluded_colors, nproc=1, verbose=False):
-    pairs_p_3_res = set()
+                                     col_list, excluded_colors, nproc=1, verbose=False):
+    pairs_p_3 = None
     with open("{}_zscores_singletons.txt".format(os.path.splitext(input_edges)[0]), "w+") as f:
         f.write("# {}\n".format(os.path.basename(input_edges)))
         f.write("# color\tn\tm\tz_score\n")
@@ -90,13 +91,12 @@ def compute_print_z_score_singletons(input_edges, n_nodes, memo_falling_frac,
                                                                                nproc=nproc, verbose=verbose)
                 f.write("{}\t{}\t{}\t{:.4f}\n".format(color, n_sub, m_sub, z_score_singletons))
     
-    return pairs_p_3_res
-
 def subgraph_profile(graph, n_nodes, memo_falling_frac, 
                      supergraph_degrees, supergraph_degree_histo, supergraph, pairs_p_3, nproc=1, verbose=False):
     """
     Compute singleton for subgraph z_scores
     """
+
     n_sub = graph.number_of_nodes()
     m_sub = graph.number_of_edges()
     z_score_singletons, pairs_p_3 = z_score_number_singletons(graph, n_nodes, memo_falling_frac, 
@@ -260,7 +260,7 @@ def all_pairs_contribution_rough(n, a, memo_falling_frac, supergraph_degree_hist
     
     return result
 
-def all_p3_pairs_par(*node, supergraph):
+def all_p3_pairs_par(node, supergraph):
     pairs_p_3_local = set()
     
     for edge1 in supergraph.edges(node):
@@ -289,29 +289,15 @@ def all_p3_pairs(pairs_p_3, supergraph, nproc=1, verbose=False):
 
     nodes = list(nx.nodes(supergraph))
     if verbose:
-        print("Processing nodes:")
-        pbar = tqdm.tqdm(total=len(nodes))
+        print("Processing nodes: --nproc {}".format(nproc))
 
     all_p3_pairs_par_partial = partial(all_p3_pairs_par, supergraph=supergraph)
 
     with mp.Pool(processes=nproc) as pool:
-        # Define a callback for pdating the progress bar
-        def update_bar(*args):
-            if verbose:
-                pbar.update()
-            return
-        
         # Run jobs
-        jobs = [pool.apply_async(all_p3_pairs_par_partial, node, callback=update_bar) for node in nodes]
-
-        # Get results from jobs
-        for job in jobs:
-            # Merge pairs_p_3 partial results
-            pairs_p_3 = pairs_p_3.union(job.get())
-    
-    if verbose:
-        pbar.close()
-    
+        jobs = tqdm.tqdm(pool.imap(all_p3_pairs_par_partial, nodes), total=len(nodes))
+        pairs_p_3 = set().union(*jobs)
+        
     return pairs_p_3
 
 def neighbor_union_size(u, v, supergraph_degrees, supergraph):
@@ -490,18 +476,16 @@ def main():
     # Plot heatmap
     plot_heatmap(args.input_edges, z_score_edges)
     singleton_zscore_t0 = time.time()
-    pairs_p_3 = None
-    pairs_p_3 = compute_print_z_score_singletons(args.input_edges, 
-                                                 n_nodes, 
-                                                 memo_falling_frac, 
-                                                 supergraph_degrees, 
-                                                 supergraph_degree_histo, 
-                                                 supergraph, 
-                                                 pairs_p_3, 
-                                                 col_list, 
-                                                 excluded_colors, 
-                                                 nproc=args.nproc,
-                                                 verbose=args.verbose)
+    compute_print_z_score_singletons(args.input_edges, 
+                                     n_nodes, 
+                                     memo_falling_frac, 
+                                     supergraph_degrees, 
+                                     supergraph_degree_histo, 
+                                     supergraph, 
+                                     col_list, 
+                                     excluded_colors, 
+                                     nproc=args.nproc,
+                                     verbose=args.verbose)
     
     singleton_zscore_t1 = time.time()
     if args.verbose:
