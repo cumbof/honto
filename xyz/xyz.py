@@ -69,10 +69,9 @@ def plot_heatmap(input_edges, z_score_edges):
     plt.savefig("{}.pdf".format(os.path.splitext(input_edges)[0]))
 
 def transform_z_score(zscores, scale_value):
-    scale_value = scale_value if scale_value >=0 else scale_value*-1
     for color1 in zscores:
         for color2 in zscores[color1]:
-            zscores[color1][color2] = math.log(zscores[color1][color2] + scale_value+1)
+            zscores[color1][color2] = math.log(zscores[color1][color2] + abs(scale_value)+1)
     return zscores
 
 def compute_print_z_score_singletons(input_edges, n_nodes, memo_falling_frac, 
@@ -370,15 +369,15 @@ def induced_color_subgraph(supergraph, attribute, value):
 
 def compute_graph_properties(supergraph, colors, excluded_colors, memo_falling_power, verbose=False):
     if verbose:
-        print("\n\tGraph properties:")
+        print("\nGraph properties:")
 
     supergraph_degrees = nx.degree(supergraph)
     n_nodes = supergraph.number_of_nodes()
     n_edges = supergraph.number_of_edges()
 
     if verbose:
-        print("\t\tNodes: {}".format(n_nodes))
-        print("\t\tEdges: {}".format(n_edges))
+        print("\tNodes: {}".format(n_nodes))
+        print("\tEdges: {}".format(n_edges))
 
     supergraph_degree_histo = nx.degree_histogram(supergraph)
     
@@ -389,7 +388,7 @@ def compute_graph_properties(supergraph, colors, excluded_colors, memo_falling_p
     sum_degrees_squared = sum_of_squares
 
     if verbose:
-        print("\t\tSum of squared degrees: {}".format(sum_of_squares))
+        print("\tSum of squared degrees: {}".format(sum_of_squares))
     
     col_list = [col for col in colors if col not in excluded_colors]
     col_list.sort()
@@ -421,7 +420,7 @@ def compute_graph_properties(supergraph, colors, excluded_colors, memo_falling_p
         pi_3 += falling_power(degree, 2, memo_falling_power) / 2
 
     if verbose:
-        print("\t\tPi3: {}".format(pi_3))
+        print("\tPi3: {}".format(pi_3))
     
     return supergraph_degrees, n_nodes, n_edges, supergraph_degree_histo, col_list, node_distribution, edge_distribution, pi_3, sum_degrees_squared, memo_falling_power
 
@@ -432,9 +431,9 @@ def main():
     args = read_params()
     if args.verbose:
         print('xyz v{} ({})'.format(__version__, __date__))
-        print("\t--input_edges {}".format(args.input_edges))
+        print("\n--input_edges {}".format(args.input_edges))
         if args.input_nodes:
-            print("\t--input_nodes {}".format(args.input_nodes))
+            print("--input_nodes {}".format(args.input_nodes))
 
     # Initialize the supergraph
     supergraph = nx.Graph()
@@ -451,6 +450,8 @@ def main():
                              isolated=args.isolated)    # Add isolated nodes
 
     edge_zscore_t0 = time.time()
+    if args.verbose:
+        print("\nComputing edge z-scores")
     excluded_colors = ""
     memo_falling_power = dict()
     memo_falling_frac = dict()
@@ -466,7 +467,7 @@ def main():
 
     edge_zscore_t1 = time.time()
     if args.verbose:
-        print("\n\tTotal elapsed time for computing edge z-score: {}s\n".format(int(edge_zscore_t1 - edge_zscore_t0)))
+        print("\nTotal elapsed time for computing edge z-score: {}s\n".format(int(edge_zscore_t1 - edge_zscore_t0)))
     
     print_z_score_edges(args.input_edges, col_list, z_score_edges)
 
@@ -475,6 +476,8 @@ def main():
     # Plot heatmap
     plot_heatmap(args.input_edges, z_score_edges)
     singleton_zscore_t0 = time.time()
+    if args.verbose:
+        print("Computing singleton z-scores")
     compute_print_z_score_singletons(args.input_edges, 
                                      n_nodes, 
                                      memo_falling_frac, 
@@ -488,7 +491,7 @@ def main():
     
     singleton_zscore_t1 = time.time()
     if args.verbose:
-        print("\tTotal elapsed time for computing singleton z-scores: {}s".format(int(singleton_zscore_t1 - singleton_zscore_t0)))
+        print("Total elapsed time for computing singleton z-scores: {}s\n".format(int(singleton_zscore_t1 - singleton_zscore_t0)))
 
     t1 = time.time()
     if args.verbose:
