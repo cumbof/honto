@@ -6,15 +6,18 @@ __authors__ = ("Paolo Giulio Franciosa (paolo.franciosa@uniroma1.it)",
                "Fabio Cumbo (fabio.cumbo@gmail.com)")
 
 __version__ = "0.1.0"
-__date__ = "May 5, 2022"
+__date__ = "May 9, 2022"
 
 import sys
+
+# Define tool name
+TOOL_ID="xyz"
 
 # Control current Python version
 # It requires Python 3 or higher
 if sys.version_info[0] < 3:
-    raise Exception("xyz requires Python 3, your current Python version is {}.{}.{}"
-                    .format(sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+    raise Exception("{} requires Python 3, your current Python version is {}.{}.{}"
+                    .format(TOOL_ID, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 
 import os, math, time, tqdm
 import xyz.utils as utils
@@ -30,6 +33,7 @@ from functools import partial
 def read_params():
     p = ap.ArgumentParser( description = ( "A novel method for assessing and measuring homophily in networks" ),
                            formatter_class = ap.ArgumentDefaultsHelpFormatter )
+    # Inputs
     p.add_argument( '--input_edges', 
                     type = str,
                     help = "Path to the file with the list of edges" )
@@ -44,11 +48,46 @@ def read_params():
                     action = 'store_true',
                     default = False,
                     help = "Insert isolated nodes" )
+    # Rescaling z-scores arguments
+    p.add_argument( '--zscore_scale',
+                    type = float,
+                    help = ( "Rescale z-scores with this constant before log-transforming values." 
+                             "Type \"{} --help\" for other options".format(TOOL_ID) ) )
+    p.add_argument( '--zscore_from_one',
+                    action = 'store_true',
+                    default = False,
+                    help = ( "Set z-scores to 1 if lower than 1 before log-transforming values" 
+                             "Type \"{} --help\" for other options".format(TOOL_ID) ) )
+    # Matplotlib arguments
+    p.add_argument( '--cmap', 
+                    type = str,
+                    default = "PiYG",
+                    help = "Heatmap colormap" )
+    p.add_argument( '--vmin', 
+                    type = float,
+                    default = 2.2957,
+                    help = "Min value to anchor the colormap" )
+    p.add_argument( '--vmax', 
+                    type = float,
+                    default = 4.3957,
+                    help = "Max value to anchor the colormap" )
+    p.add_argument( '--center', 
+                    type = float,
+                    default = 2.9957,
+                    help = "The value at which to center the colormap when plotting divergant data" )
+    p.add_argument( '--cbar', 
+                    action = 'store_true',
+                    default = False,
+                    help = "Whether to draw a colorbar" )
+    # General purpose arguments
     p.add_argument( '--nproc', 
                     type = int,
                     default = 1,
-                    help = "Make it parallel" )
-    # General purpose arguments
+                    help = "Make the computation of the z-scores parallel for singletons" )
+    p.add_argument( '--overwrite',
+                    action = 'store_true',
+                    default = False,
+                    help = "Overwrite results if already exist" )
     p.add_argument( '--verbose',
                     action = 'store_true',
                     default = False,
@@ -56,22 +95,40 @@ def read_params():
     p.add_argument( '-v', 
                     '--version', 
                     action = 'version',
-                    version = 'xyz v{} ({})'.format( __version__, __date__ ),
-                    help = "Print current xyz version and exit" )
+                    version = '{} v{} ({})'.format( TOOL_ID, __version__, __date__ ),
+                    help = "Print current {} version and exit".format(TOOL_ID) )
     return p.parse_args()
 
-def plot_heatmap(input_edges, z_score_edges):
+def plot_heatmap(input_edges, z_score_edges, cmap="PiYG", vmin=None, vmax=None, center=None, cbar=False):
     scores = pd.DataFrame(z_score_edges).T.fillna(0)
     fig, ax = plt.subplots(figsize=(5,5))
-    sb.heatmap(scores, square=True, cmap="PiYG", vmin=2.2957, vmax=4.3957, center=2.9957, cbar=False, ax=ax)
+    sb.heatmap(scores, square=True, cmap=cmap, vmin=vmin, vmax=vmax, center=center, cbar=cbar, ax=ax)
     plt.tick_params(axis="both", which="major", labelsize=12, labelleft=True, labeltop=True, 
                     left=False, right=False, labelbottom=False, bottom=False, top=False)
     plt.savefig("{}.pdf".format(os.path.splitext(input_edges)[0]))
 
-def transform_z_score(zscores, scale_value):
+def transform_z_score(zscores, scale_value=None, from_one=False):
+    """
+    Rescale z-scores
+
+    :param zscores:         Z-scores
+    :param scale_value:     Rescale z-scare with this value: z-score - scale_value + 1
+    :param from_one:        Set z-scores to 1 if lower than 1
+    """
+
+    if scale_value is None and not from_one:
+        auto_scale = min([zscores[color1][color2] for color1 in zscores for color2 in zscores[color1]])
+
     for color1 in zscores:
         for color2 in zscores[color1]:
-            zscores[color1][color2] = math.log(zscores[color1][color2] + abs(scale_value)+1)
+            value = zscores[color1][color2]
+            if scale_value is not None:
+                value += scale_value
+            elif from_one:
+                value = 1 if value < 1 else value
+            else:
+                value += 1 - auto_scale
+            zscores[color1][color2] = math.log(value)
     return zscores
 
 def compute_print_z_score_singletons(input_edges, n_nodes, memo_falling_frac, 
@@ -287,13 +344,13 @@ def all_p3_pairs(pairs_p_3, supergraph, nproc=1, verbose=False):
 
     nodes = list(nx.nodes(supergraph))
     if verbose:
-        print("Processing nodes: --nproc {}".format(nproc))
+        print("Processing nodes")
 
     all_p3_pairs_par_partial = partial(all_p3_pairs_par, supergraph=supergraph)
 
     with mp.Pool(processes=nproc) as pool:
         # Run jobs
-        jobs = tqdm.tqdm(pool.imap(all_p3_pairs_par_partial, nodes), total=len(nodes))
+        jobs = tqdm.tqdm(pool.imap(all_p3_pairs_par_partial, nodes), total=len(nodes), disable=(not verbose))
         pairs_p_3 = set().union(*jobs)
         
     return pairs_p_3
@@ -430,11 +487,42 @@ def main():
     # Load command line parameters
     args = read_params()
     if args.verbose:
-        print('xyz v{} ({})'.format(__version__, __date__))
+        print('{} v{} ({})'.format(TOOL_ID, __version__, __date__))
         print("\n--input_edges {}".format(args.input_edges))
         if args.input_nodes:
             print("--input_nodes {}".format(args.input_nodes))
 
+    # input_edges is required
+    if not args.input_edges or not os.path.exists(args.input_edges):
+        raise FileNotFoundError("Unable to locate input file: {}".format(args.input_edges))
+    # input_nodes is optional
+    if args.input_nodes and not os.path.exists(args.input_nodes):
+        raise FileNotFoundError("Unable to locate input file: {}".format(args.input_nodes))
+
+    # Reassign nproc if the provided one is greater than current cpu_count
+    nproc = args.nproc
+    if nproc < 1:
+        raise ValueError("--nproc must be greater than 1")
+    elif nproc > os.cpu_count():
+        nproc = os.cpu_count()
+    if args.verbose:
+        print("--nproc {}".format(nproc))
+
+    # Check whether --cmap is a valid colormap
+    if args.cmap not in plt.colormaps():
+        raise ValueError("--cmap is not a valid Matplotlib colormap")
+    
+    # Check whether the output already exists
+    if not args.overwrite:
+        out_files = [
+            "{}_zscores_edges.txt".format(os.path.splitext(args.input_edges)[0]),
+            "{}_zscores_singletons.txt".format(os.path.splitext(args.input_edges)[0]),
+            "{}.pdf".format(os.path.splitext(args.input_edges)[0])
+        ]
+        for out_path in out_files:
+            if os.path.exists(out_path):
+                raise OSError("Output file already exists: {}".format(out_path))
+    
     # Initialize the supergraph
     supergraph = nx.Graph()
     # Assign the input file name as the supergraph name
@@ -472,9 +560,11 @@ def main():
     print_z_score_edges(args.input_edges, col_list, z_score_edges)
 
     # Z-score log transformation for plotting heatmap
-    z_score_edges = transform_z_score(z_score_edges, min_value)
+    z_score_edges = transform_z_score(z_score_edges, scale_value=args.zscore_scale, from_one=args.zscore_from_one)
     # Plot heatmap
-    plot_heatmap(args.input_edges, z_score_edges)
+    plot_heatmap(args.input_edges, z_score_edges, 
+                 cmap=args.cmap, vmin=args.vmin, vmax=args.vmax, center=args.center, cbar=args.cbar)
+    
     singleton_zscore_t0 = time.time()
     if args.verbose:
         print("Computing singleton z-scores")
@@ -486,7 +576,7 @@ def main():
                                      supergraph, 
                                      col_list, 
                                      excluded_colors, 
-                                     nproc=args.nproc,
+                                     nproc=nproc,
                                      verbose=args.verbose)
     
     singleton_zscore_t1 = time.time()
