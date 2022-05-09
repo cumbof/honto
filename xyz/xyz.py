@@ -69,8 +69,7 @@ def plot_heatmap(input_edges, z_score_edges):
     plt.savefig("{}.pdf".format(os.path.splitext(input_edges)[0]))
 
 def transform_z_score(zscores, scale_value):
-    #scale_value = scale_value if scale_value >=0 else scale_value*-1
-    scale_value = 20
+    scale_value = scale_value if scale_value >=0 else scale_value*-1
     for color1 in zscores:
         for color2 in zscores[color1]:
             zscores[color1][color2] = math.log(zscores[color1][color2] + scale_value+1)
