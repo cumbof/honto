@@ -6,7 +6,7 @@ __authors__ = ("Paolo Giulio Franciosa (paolo.franciosa@uniroma1.it)",
                "Fabio Cumbo (fabio.cumbo@gmail.com)")
 
 __version__ = "0.1.0"
-__date__ = "May 9, 2022"
+__date__ = "May 10, 2022"
 
 import sys
 
@@ -49,15 +49,17 @@ def read_params():
                     default = False,
                     help = "Insert isolated nodes" )
     # Rescaling z-scores arguments
-    p.add_argument( '--zscore_scale',
-                    type = float,
-                    help = ( "Rescale z-scores with this constant before log-transforming values." 
-                             "Type \"{} --help\" for other options".format(TOOL_ID) ) )
-    p.add_argument( '--zscore_from_one',
+    p.add_argument( '--log_transform',
                     action = 'store_true',
                     default = False,
-                    help = ( "Set z-scores to 1 if lower than 1 before log-transforming values" 
-                             "Type \"{} --help\" for other options".format(TOOL_ID) ) )
+                    help = "Log-transform z-scores" )
+    p.add_argument( '--scale_factor',
+                    type = float,
+                    help = "Rescale z-scores with this constant before log-transforming values" )
+    p.add_argument( '--scale_from_one',
+                    action = 'store_true',
+                    default = False,
+                    help = "Set z-scores to 1 if lower than 1 before log-transforming values" )
     # Matplotlib arguments
     p.add_argument( '--cmap', 
                     type = str,
@@ -560,7 +562,8 @@ def main():
     print_z_score_edges(args.input_edges, col_list, z_score_edges)
 
     # Z-score log transformation for plotting heatmap
-    z_score_edges = transform_z_score(z_score_edges, scale_value=args.zscore_scale, from_one=args.zscore_from_one)
+    if args.log_transform:
+        z_score_edges = transform_z_score(z_score_edges, scale_value=args.scale_factor, from_one=args.scale_from_one)
     # Plot heatmap
     plot_heatmap(args.input_edges, z_score_edges, 
                  cmap=args.cmap, vmin=args.vmin, vmax=args.vmax, center=args.center, cbar=args.cbar)
