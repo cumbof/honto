@@ -45,7 +45,7 @@ about:
   license_file: LICENSE
   summary: xyz
   description: |
-    A novel method for assessing and measuring homophily in networks through second-order statistics.
+    A novel method for assessing and measuring homophily in networks.
 
 extra:
   recipe-maintainers:
