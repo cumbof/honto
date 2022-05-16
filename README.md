@@ -4,7 +4,7 @@
 
 <img src="https://anaconda.org/conda-forge/honto/badges/version.svg"> <img src="https://anaconda.org/conda-forge/honto/badges/downloads.svg">
 
-HONTO is a tool designed for assessing and measuring homophily in networks whose nodes have categorical attributes, namely when the nodes of networks come partitioned into classes.
+`honto` is a tool designed for assessing and measuring homophily in networks whose nodes have categorical attributes, namely when the nodes of networks come partitioned into classes.
 
 Homophily evaluation is performed through the comparison between the relative edge density of the subgraphs, induced by each class, and the corresponding expected relative edge density under a null model.
 
@@ -12,7 +12,7 @@ The novelty of our approach consists in prescribing an endogenous null model, na
 
 ## Install
 
-HONTO is available through `pip` and `conda`.
+`honto` is available through `pip` and `conda`.
 Please, use one of the following commands to start working with `honto`:
 
 ```
@@ -22,6 +22,8 @@ pip install honto
 # Install with conda
 conda install -c conda-forge honto
 ```
+
+Please note that `honto` is also available as a Galaxy tool. It's wrapper is available under the official Galaxy ToolShed at [https://toolshed.g2.bx.psu.edu/view/fabio/honto](https://toolshed.g2.bx.psu.edu/view/fabio/honto)
 
 ## Usage
 
