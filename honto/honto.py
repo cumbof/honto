@@ -11,7 +11,7 @@ __date__ = "May 10, 2022"
 import sys
 
 # Define tool name
-TOOL_ID="xyz"
+TOOL_ID="honto"
 
 # Control current Python version
 # It requires Python 3 or higher
@@ -20,7 +20,7 @@ if sys.version_info[0] < 3:
                     .format(TOOL_ID, sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 
 import os, math, time, tqdm
-import xyz.utils as utils
+import honto.utils as utils
 import argparse as ap
 import pandas as pd
 import networkx as nx

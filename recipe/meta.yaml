@@ -1,4 +1,4 @@
-{% set name = "xyz" %}
+{% set name = "honto" %}
 {% set version = "0.1.0" %}
 
 package:
@@ -13,7 +13,7 @@ build:
   number: 0
   noarch: python
   entry_points:
-    - xyz=xyz.xyz:main
+    - honto=honto.honto:main
   script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
@@ -31,19 +31,19 @@ requirements:
 
 test:
   imports:
-    - xyz
+    - honto
   commands:
     - pip check
-    - xyz --version
+    - honto --version
   requires:
     - pip
 
 about:
-  home: https://github.com/fabio-cumbo/xyz
+  home: https://github.com/fabio-cumbo/honto
   license: MIT
   license_family: MIT
   license_file: LICENSE
-  summary: xyz
+  summary: honto
   description: |
     A novel method for assessing and measuring homophily in networks.
 

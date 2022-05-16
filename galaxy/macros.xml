@@ -1,7 +1,7 @@
 <macros>
     <xml name="requirements">
         <requirements>
-            <requirement type="package" version="0.1.0">xyz</requirement>
+            <requirement type="package" version="0.1.0">honto</requirement>
         </requirements>
     </xml>
 
@@ -12,11 +12,5 @@
             <person givenName="Daniele" familyName="Santoni" url="http://www.iasi.cnr.it/~dsantoni/" email="daniele.santoni@iasi.cnr.it" />
             <person givenName="Fabio" familyName="Cumbo" url="https://fabio-cumbo.github.io/" email="fabio.cumbo@gmail.com" />
         </creator>
-    </xml>
-
-    <xml name="citations">
-        <citations>
-            <citation type="doi">10.3390/a13090233</citation>
-        </citations>
     </xml>
 </macros>
