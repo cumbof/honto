@@ -50,16 +50,14 @@
         #end if
     #end if
 
-    #if $heatmap.customize == "true":
-        --cmap $heatmap.cmap
-        --vmin $heatmap.vmin
-        --vmax $heatmap.vmax
-        --center $heatmap.center
-        #if $heatmap.cbar == "yes":
-            --cbar
-        #end if
+    --cmap $heatmap.cmap
+    --vmin $heatmap.vmin
+    --vmax $heatmap.vmax
+    --center $heatmap.center
+    #if $heatmap.cbar == "yes":
+        --cbar
     #end if
-
+    
     --nproc "\${GALAXY_SLOTS:-4}"
     --overwrite
     --verbose
@@ -90,7 +88,7 @@
         <conditional name="log_transform">
             <!-- Enable log-transformation -->
             <param name="enable_lt" type="boolean" checked="false" truevalue="yes" falsevalue="no" 
-                   label="Log-transform z-scores?" />
+                   label="Log-transform z-scores" />
 
             <when value="yes">
                 <!-- Scale options -->
@@ -111,40 +109,34 @@
                 </conditional>
             </when>
         </conditional>
+        
+        <!-- Heatmap customization options -->
+        <section name="heatmap" expanded="true" 
+                 title="Heatmap customization"
+                 help="Access advanced options to customize the produced heatmap by specifying the colormap, scale, and color bar">
+            <!-- Colormap -->
+            <param name="cmap" type="text" value="PiYG" 
+                   label="Heatmap colormap" />
             
-        <!-- Log-transformation options -->
-        <conditional name="heatmap">
-            <!-- Enable log-transformation -->
-            <param name="customize" type="boolean" checked="false" truevalue="true" falsevalue="false" 
-                   label="Customize heatmap"
-                   help="Access advanced options to customize the graphical output." />
+            <!-- Vmin -->
+            <param name="vmin" type="float" value="2.2967"
+                   label="Select a vmin value" 
+                   help="Min value to anchor the colormap" />
             
-            <!-- In case of "true" -->
-            <when value="true">
-                <!-- Colormap -->
-                <param name="cmap" type="text" value="PiYG" 
-                       label="Heatmap colormap" />
-                
-                <!-- Vmin -->
-                <param name="vmin" type="float" value="2.2967"
-                       label="Select a vmin value" 
-                       help="Min value to anchor the colormap" />
-                
-                <!-- Vmax -->
-                <param name="vmax" type="float" value="4.3957"
-                       label="Select a vmax value" 
-                       help="Max value to anchor the colormap" />
-                
-                <!-- Center -->
-                <param name="center" type="float" value="2.9957"
-                       label="Select a center" 
-                       help="The value at which to center the colormap when plotting divergent data" />
-                
-                <!-- Cbar -->
-                <param name="cbar" type="boolean" checked="false" truevalue="yes" falsevalue="no" 
-                       label="Add a color bar" />
-            </when>
-        </conditional>
+            <!-- Vmax -->
+            <param name="vmax" type="float" value="4.3957"
+                   label="Select a vmax value" 
+                   help="Max value to anchor the colormap" />
+            
+            <!-- Center -->
+            <param name="center" type="float" value="2.9957"
+                   label="Select a center" 
+                   help="The value at which to center the colormap when plotting divergent data" />
+            
+            <!-- Cbar -->
+            <param name="cbar" type="boolean" checked="false" truevalue="yes" falsevalue="no" 
+                   label="Add a color bar" />
+        </section>
     </inputs>
 
     <outputs>
@@ -165,7 +157,69 @@
     </outputs>
 
     <help><![CDATA[
-Define the tool help here with info about input and output
+**Homophily Network Tool**
+
+`honto` is a tool designed for assessing and measuring homophily in networks whose nodes have categorical attributes, 
+namely when the nodes of networks come partitioned into classes.
+
+Homophily evaluation is performed through the comparison between the relative edge density of the subgraphs, 
+induced by each class, and the corresponding expected relative edge density under a null model.
+
+The novelty of our approach consists in prescribing an endogenous null model, namely, the sample space of the null model 
+is built on the input network itself. This allows us to give exact explicit expressions for the z-scores of the 
+relative edge density of each class as well as other related statistics
+
+-----
+
+**Input**
+
+The first input is file representing an undirected network composed by a list of edges like the example below.
+No header lines are allowed.
+
++--------+--------+
+| TP0001 | TP1015 |
++--------+--------+
+| TP0001 | TP0949 |
++--------+--------+
+| TP0001 | TP0692 |
++--------+--------+
+| ...    | ...    |
++--------+--------+
+| TP0976 | TP0977 |
++--------+--------+
+| TP1032 | TP1033 |
++--------+--------+
+
+
+Please note that the above mentioned file could also have an additional column with numeric weight values.
+You may want to avoid considering some nodes by applying a threshold on this column.
+
+The second input is the nodes definition file. It contains a row for each node in the network with two columns
+with a mapping between the node name and a color or group id, like in the example below.
+No header lines are allowed in this case either.
+
++--------+-----+
+| TP0001 | L   |
++--------+-----+
+| TP1015 | K   |
++--------+-----+
+| TP0949 | U   |
++--------+-----+
+| TP0692 | L   |
++--------+-----+
+| ...    | ... |
++--------+-----+
+| TP1032 | X   |
++--------+-----+
+| TP1033 | X   |
++--------+-----+
+
+-----
+
+**Output**
+
+The tool produces three output files. Two of them contains the z-scores for both edges and singletons.
+The third output is a PDF with the final heatmap.
 
 -----
 
