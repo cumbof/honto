@@ -1,28 +1,167 @@
 <?xml version="1.0"?>
 <tool name="honto" id="honto" version="0.1.0">
     <description>A novel method for assessing and measuring homophily in networks</description>
-    <macros>
-        <import>macros.xml</import>
-    </macros>
-
+    
     <!-- Tool developers -->
-    <expand macro="creator" />
+    <creator>
+        <person givenName="Paolo" familyName="Franciosa" 
+                url="http://www.statistica.uniroma1.it/users/pfrancio/" 
+                email="paolo.franciosa@uniroma1.it" />
+
+        <person givenName="Nicola" familyName="Apollonio" 
+                url="https://www.iac.rm.cnr.it/~apollonio/" 
+                email="nicola.apollonio@cnr.it" />
+
+        <person givenName="Daniele" familyName="Santoni" 
+                url="http://www.iasi.cnr.it/~dsantoni/" 
+                email="daniele.santoni@iasi.cnr.it" />
+
+        <person givenName="Fabio" familyName="Cumbo" 
+                url="https://fabio-cumbo.github.io/" 
+                email="fabio.cumbo@gmail.com" />
+    </creator>
 
     <!-- Define dependencies -->
-    <expand macro="requirements" />
+    <requirements>
+        <requirement type="package" version="0.1.0">honto</requirement>
+    </requirements>
 
     <command detect_errors="exit_code">
 <![CDATA[
-    ...
+    ln -s ${edges} edges.txt;
+    ln -s ${nodes} nodes.txt;
+
+    honto 
+
+    --input_edges edges.txt
+    --input_nodes nodes.txt
+    --weight_threshold ${weight_threshold}
+    
+    #if $isolated == "yes":
+        --isolated
+    #end if
+
+    #if $log_transform.enable_lt == "yes":
+        --log_transform
+        #if $log_transform.scale_log.scale_type == "factor":
+            --scale_factor $log_transform.scale_log.scale_value
+        #elif $log_transform.scale_log.scale_type == "from_one":
+            --scale_from_one
+        #end if
+    #end if
+
+    #if $heatmap.customize == "true":
+        --cmap $heatmap.cmap
+        --vmin $heatmap.vmin
+        --vmax $heatmap.vmax
+        --center $heatmap.center
+        #if $heatmap.cbar == "yes":
+            --cbar
+        #end if
+    #end if
+
+    --nproc "\${GALAXY_SLOTS:-4}"
+    --overwrite
+    --verbose
 ]]>
     </command>
 
     <inputs>
+        <!-- Select edges -->
+        <param name="edges" type="data" format="tsv" 
+               label="Select a network" 
+               help="Input network with the list of edges, one per line." />
         
+        <!-- Select colors -->
+        <param name="nodes" type="data" format="tsv" 
+               label="Select a nodes definition file" 
+               help="This file contains a mapping between node names and colors." />
+        
+        <!-- Weight threshold -->
+        <param name="weight_threshold" type="integer" value="700" min="0" 
+               label="Weight threshold" 
+               help="Threshold for considering edges based in their weight." />
+        
+        <!-- Isolated -->
+        <param name="isolated" type="boolean" checked="false" truevalue="yes" falsevalue="no" 
+               label="Insert isolated nodes" />
+        
+        <!-- Log-transformation options -->
+        <conditional name="log_transform">
+            <!-- Enable log-transformation -->
+            <param name="enable_lt" type="boolean" checked="false" truevalue="yes" falsevalue="no" 
+                   label="Log-transform z-scores?" />
+
+            <when value="yes">
+                <!-- Scale options -->
+                <conditional name="scale_log">
+                    <!-- Select a scale option -->
+                    <param name="scale_type" type="select" label="Choose one of the available scale options">
+                        <option value="default" selected="true">Scale automatically</option>
+                        <option value="factor">Factor</option>
+                        <option value="from_one">Truncate from one</option>
+                    </param>
+
+                    <!-- In case of "factor" -->
+                    <when value="factor">
+                        <param name="scale_value" type="float" value="0.0"
+                               label="Scale factor" 
+                               help="Rescale z-scores with this constant before log-transforming values." />
+                    </when>
+                </conditional>
+            </when>
+        </conditional>
+            
+        <!-- Log-transformation options -->
+        <conditional name="heatmap">
+            <!-- Enable log-transformation -->
+            <param name="customize" type="boolean" checked="false" truevalue="true" falsevalue="false" 
+                   label="Customize heatmap"
+                   help="Access advanced options to customize the graphical output." />
+            
+            <!-- In case of "true" -->
+            <when value="true">
+                <!-- Colormap -->
+                <param name="cmap" type="text" value="PiYG" 
+                       label="Heatmap colormap" />
+                
+                <!-- Vmin -->
+                <param name="vmin" type="float" value="2.2967"
+                       label="Select a vmin value" 
+                       help="Min value to anchor the colormap" />
+                
+                <!-- Vmax -->
+                <param name="vmax" type="float" value="4.3957"
+                       label="Select a vmax value" 
+                       help="Max value to anchor the colormap" />
+                
+                <!-- Center -->
+                <param name="center" type="float" value="2.9957"
+                       label="Select a center" 
+                       help="The value at which to center the colormap when plotting divergent data" />
+                
+                <!-- Cbar -->
+                <param name="cbar" type="boolean" checked="false" truevalue="yes" falsevalue="no" 
+                       label="Add a color bar" />
+            </when>
+        </conditional>
     </inputs>
 
     <outputs>
+        <!-- Output z-scores edges -->
+        <data format="tsv" name="zscores_edges" 
+              label="${tool.name} on ${on_string}: Edges z-scores" 
+              from_work_dir="edges_zscores_edges.txt" />
         
+        <!-- Output z-scores singletons -->
+        <data format="tsv" name="zscores_singletons" 
+              label="${tool.name} on ${on_string}: Singletons z-scores" 
+              from_work_dir="edges_zscores_singletons.txt" />
+        
+        <!-- Output heatmap -->
+        <data format="pdf" name="out_heatmap" 
+              label="${tool.name} on ${on_string}: Heatmap" 
+              from_work_dir="edges.pdf" />
     </outputs>
 
     <help><![CDATA[
@@ -34,10 +173,9 @@ Define the tool help here with info about input and output
 
 **Notes**
 
-Please visit this GitHub repository GithHub_repository_ for additional information about honto.
+Please visit the official GitHub repository_ for other information about `honto`.
 
-.. _GithHub_repository: https://github.com/fabio-cumbo/honto
+.. _repository: https://github.com/fabio-cumbo/honto
     ]]></help>
 
-    <expand macro="citations" />
 </tool>
