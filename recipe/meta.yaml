@@ -39,7 +39,7 @@ test:
     - pip
 
 about:
-  home: https://github.com/fabio-cumbo/honto
+  home: https://github.com/cumbof/honto
   license: MIT
   license_family: MIT
   license_file: LICENSE
@@ -49,4 +49,4 @@ about:
 
 extra:
   recipe-maintainers:
-    - fabio-cumbo
+    - cumbof
