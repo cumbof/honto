@@ -61,6 +61,15 @@ List of arguments for customizing the heatmap
 --cbar      -- Whether to draw a colorbar
 ```
 
+## Credits
+
+Please credit our work in your manuscript by citing:
+
+> _Manuscript in preparation_
+
+> Nicola Apollonio, Paolo G Franciosa, and Daniele Santoni. **A novel method for assessing and measuring homophily in networks through
+second-order statistics**. Scientific reports, 12(1):1–18, 2022, [https://doi.org/10.1038/s41598-022-12710-7](https://doi.org/10.1038/s41598-022-12710-7)
+
 ## Contributing
 
 Long-term discussion and bug reports are maintained via GitHub Issues, while code review is managed via GitHub Pull Requests.
