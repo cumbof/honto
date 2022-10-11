@@ -5,12 +5,12 @@ __authors__ = ("Paolo Giulio Franciosa (paolo.franciosa@uniroma1.it)"
                "Daniele Santoni (daniele.santoni@iasi.cnr.it)"
                "Fabio Cumbo (fabio.cumbo@gmail.com)")
 
-__version__ = "0.1.0"
-__date__ = "May 5, 2022"
+__version__ = "0.1.1"
+__date__ = "Oct 11, 2022"
 
 import os
 
-def inputGraphFromFile(file_colors, file_network, graph, colors, colorGroups, weight_threshold, isolated):
+def inputGraphFromFile(file_colors, file_network, graph, colors, weight_threshold, isolated):
     """
     Read a graph from files
 
@@ -18,7 +18,6 @@ def inputGraphFromFile(file_colors, file_network, graph, colors, colorGroups, we
                                 Default color value is "X"
     :param graph:               NetworkX graph, initially empty
     :param colors:              Set of colors in graph, initially empty
-    :param colorGroups:         Set of color groups in graph, initially empty
     :param file_network:        Path to the file with couples of edges, one for each line. The representing graph is not oriented.
                                 Nodes could not be defined in "file_colors". In this case, nodes are considered with color "X".
                                 There could be a weight for each edge. In this case, edges are considered if their weight is greater 
@@ -27,17 +26,17 @@ def inputGraphFromFile(file_colors, file_network, graph, colors, colorGroups, we
     :param isolated:            Also insert isolated nodes if true
     """
     
-    # Add edgens to the NetworkX graph
+    # Add edges to the NetworkX graph
     addEdges(graph, file_network, weight_threshold)
     # Read colors from input file
     readColors(graph, file_colors, isolated)
     # Populate colors
-    populateColors(graph, colors, colorGroups)
+    populateColors(graph, colors)
 
 def readColors(graph, filepath, isolated):
     """
     Read nodes with colors from file
-    Set node attribute as color and color group
+    Set node attribute as color
     Nodes with names "xxx_y" are allowed
     Extensions are trimmed out from edges while reading input file
     If a node has an extension, verify whether it already exists with a color:
@@ -58,50 +57,33 @@ def readColors(graph, filepath, isolated):
                     node = fields[0][:fields[0].index("_")].upper() if "_" in fields[0] else fields[0].upper()
                     if len(fields) == 1:
                         color = "X"
-                        colorGroup = "X"
                     else:
                         color = fields[1]
-                        if color in "RS":
-                            color = "X"
-                        if color in "JAKLB":
-                            colorGroup = "JAKLB"
-                        elif color in "DYVTMNZWUO":
-                            colorGroup = "DYVTMNZWUO"
-                        elif color in "CGEFHIPQ":
-                            colorGroup = "CGEFHIPQ"
-                        elif color in "RSX":
-                            colorGroup = "X"  
-                        else:
-                            colorGroup = fields[1]
                     
                     if node not in graph.nodes() and isolated:
-                        graph.add_node(node, color="", colorGroup="colGroup")
+                        graph.add_node(node, color="")
                     
                     if node in graph.nodes():
                         oldColor = graph.nodes[node]["color"]
                         if oldColor and oldColor != colore:
                             color = "X"
-                            colorGroup = "X"  
                         graph.add_node(node, color=color)
-                        graph.add_node(node, colorGroup=colorGroup)
 
     # Set color to "X" for all nodes in graph with no color
     for node in graph.nodes:
         if graph.nodes[node]["color"] == "":
-            graph.add_node(node, color="X", colorGroup="X")
+            graph.add_node(node, color="X")
 
-def populateColors(graph, colors, colorGroups):
+def populateColors(graph, colors):
     """
-    Iterate over nodes and add color and group of colors to "colors" and "colorGroups"
+    Iterate over nodes and add color to "colors"
 
     :param graph:           NetworkX graph
     :param colors:          List of colors
-    :param colorGroups:     List of color groups
     """
 
     for node in graph.nodes:
         colors.add(graph.nodes[node]["color"])
-        colorGroups.add(graph.nodes[node]["colorGroup"])
 
 def addEdges(graph, filepath, weight_threshold):
     """
@@ -124,13 +106,13 @@ def addEdges(graph, filepath, weight_threshold):
                 if len(fields) == 3:
                     weight = int(fields[2])
                     if weight >= weight_threshold:
-                        graph.add_node(node1, color="", colorGroup="")
-                        graph.add_node(node2, color="", colorGroup="")
+                        graph.add_node(node1, color="")
+                        graph.add_node(node2, color="")
                         graph.add_edge(node1, node2)
                         graph.add_edge(node2, node1)
                 else:
-                    graph.add_node(node1, color="", colorGroup="")
-                    graph.add_node(node2, color="", colorGroup="")
+                    graph.add_node(node1, color="")
+                    graph.add_node(node2, color="")
                     graph.add_edge(node1, node2)
                     graph.add_edge(node2, node1)
 

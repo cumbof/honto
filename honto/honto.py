@@ -5,8 +5,8 @@ __authors__ = ("Paolo Giulio Franciosa (paolo.franciosa@uniroma1.it)",
                "Daniele Santoni (daniele.santoni@iasi.cnr.it)",
                "Fabio Cumbo (fabio.cumbo@gmail.com)")
 
-__version__ = "0.1.0"
-__date__ = "May 10, 2022"
+__version__ = "0.1.1"
+__date__ = "Oct 11, 2022"
 
 import sys
 
@@ -266,6 +266,9 @@ def variance_number_singletons_fast(graph, n_nodes, memo_falling_frac,
                                     supergraph_degrees, supergraph_degree_histo, supergraph, pairs_p_3, nproc=1, verbose=False):
     graph_nodes = graph.number_of_nodes()
 
+    if graph_nodes == 1:
+        return 0, None
+
     summation = 0
     summation += all_pairs_contribution_rough(n_nodes, graph_nodes, memo_falling_frac, supergraph_degree_histo)
     summation -= edge_contribution_rough(n_nodes, graph_nodes, memo_falling_frac, supergraph, supergraph_degrees)
@@ -373,6 +376,9 @@ def compute_falling_frac(num, den, b):
 
     if b > num:
         return 0
+
+    if num == den:
+        return 1
 
     p = 1
     while b > 0:
@@ -530,12 +536,10 @@ def main():
     # Assign the input file name as the supergraph name
     supergraph.graph["name"] = os.path.splitext(os.path.basename(args.input_edges))[0]
     colors = set()
-    colorGroups = set()
     utils.inputGraphFromFile(args.input_nodes,          # Input file with nodes and colors
                              args.input_edges,          # Input file with edges
                              supergraph,                # NetworkX supergraph
                              colors,                    # Set of colors
-                             colorGroups,               # Set of color groups
                              args.weight_threshold,     # Weight threshold
                              isolated=args.isolated)    # Add isolated nodes
 
