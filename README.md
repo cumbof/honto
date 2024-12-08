@@ -65,7 +65,7 @@ List of arguments for customizing the heatmap
 
 Please credit our work in your manuscript by citing:
 
-> _Manuscript in preparation_
+> Nicola Apollonio, Daniel Blankenberg, Fabio Cumbo, Paolo G Franciosa, and Daniele Santoni. ***Evaluating homophily in networks via HONTO (HOmophily Network TOol): a case study of chromosomal interactions in human PPI networks***. Bioinformatics, 39(1), 2023, [https://doi.org/10.1093/bioinformatics/btac763](https://doi.org/10.1093/bioinformatics/btac763)
 
 > Nicola Apollonio, Paolo G Franciosa, and Daniele Santoni. **A novel method for assessing and measuring homophily in networks through
 second-order statistics**. Scientific reports, 12(1):1–18, 2022, [https://doi.org/10.1038/s41598-022-12710-7](https://doi.org/10.1038/s41598-022-12710-7)
